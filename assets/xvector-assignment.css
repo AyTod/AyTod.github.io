@@ -1,0 +1,31 @@
+#csv-logo{
+	margin-top: 22vh;
+	height: 200px;
+	width: 200px;
+	margin-left: auto;
+	margin-right: auto;
+}
+#csv-logo img{
+	height: 100%
+}
+#upload-csv{
+	width: 16vw;
+	margin-left: auto;
+	margin-right: auto;
+	margin-top: 20px;
+	text-align: center
+}
+#input-file{
+	background-color: lightgrey;
+	padding: 5px;
+}
+#input-file:focus{
+	outline: none;
+}
+#upload-button{
+	margin: 10px;
+}
+#graph-display{
+	width: min-content;
+	margin: 5vh auto;
+}
