@@ -339,7 +339,7 @@
   };
   _exports.default = _default;
 });
-;define("xvector-assignment/pods/add-csv/route", ["exports"], function (_exports) {
+;define("xvector-assignment/models/index", ["exports", "ember-data"], function (_exports, _emberData) {
   "use strict";
 
   Object.defineProperty(_exports, "__esModule", {
@@ -347,24 +347,8 @@
   });
   _exports.default = void 0;
 
-  var _default = Ember.Route.extend({});
-
-  _exports.default = _default;
-});
-;define("xvector-assignment/pods/add-csv/template", ["exports"], function (_exports) {
-  "use strict";
-
-  Object.defineProperty(_exports, "__esModule", {
-    value: true
-  });
-  _exports.default = void 0;
-
-  var _default = Ember.HTMLBars.template({
-    "id": "bnQVeoEV",
-    "block": "{\"symbols\":[],\"statements\":[[1,[22,\"outlet\"],false]],\"hasEval\":false}",
-    "meta": {
-      "moduleName": "xvector-assignment/pods/add-csv/template.hbs"
-    }
+  var _default = _emberData.default.Model.extend({
+    csv: _emberData.default.attr("string")
   });
 
   _exports.default = _default;
@@ -399,36 +383,6 @@
 
   _exports.default = _default;
 });
-;define("xvector-assignment/pods/components/file-upload/component", ["exports"], function (_exports) {
-  "use strict";
-
-  Object.defineProperty(_exports, "__esModule", {
-    value: true
-  });
-  _exports.default = void 0;
-
-  var _default = Ember.Component.extend({});
-
-  _exports.default = _default;
-});
-;define("xvector-assignment/pods/components/file-upload/template", ["exports"], function (_exports) {
-  "use strict";
-
-  Object.defineProperty(_exports, "__esModule", {
-    value: true
-  });
-  _exports.default = void 0;
-
-  var _default = Ember.HTMLBars.template({
-    "id": "f/HaIX/f",
-    "block": "{\"symbols\":[],\"statements\":[],\"hasEval\":false}",
-    "meta": {
-      "moduleName": "xvector-assignment/pods/components/file-upload/template.hbs"
-    }
-  });
-
-  _exports.default = _default;
-});
 ;define("xvector-assignment/pods/components/line-graph/component", ["exports"], function (_exports) {
   "use strict";
 
@@ -438,8 +392,8 @@
   _exports.default = void 0;
 
   var _default = Ember.Component.extend({
-    lineColor: "red",
-    markerColor: "green",
+    lineColor: "#ff0000",
+    markerColor: "#00ff00",
     scrollZoom: false,
     temporaryEdit: false,
     lineWidth: 5,
@@ -448,16 +402,52 @@
     labelX: '',
     labelY: '',
     layoutHeight: 400,
-    layoutWidth: 600,
-    paperBGColor: 'white',
-    plotBGColor: 'white',
+    layoutWidth: 1100,
+    paperBGColor: '#f6f6f6',
+    plotBGColor: '#f6f6f6',
+    batchNumber: 1,
+    batchSize: 100,
+
+    init() {
+      this._super();
+
+      const csvContent = JSON.parse(localStorage.getItem("csv"));
+      this.set('labelX', csvContent[0][0]);
+      this.set('labelY', csvContent[0][1]);
+    },
+
+    getDatasetByBatch() {
+      console.log(this.lineType);
+      let isFinished = false;
+      const csvContent = JSON.parse(localStorage.getItem("csv"));
+      const lowerIndex = this.get('batchNumber') * this.get('batchSize');
+      const upperIndex = lowerIndex + this.get('batchSize') < csvContent.length ? lowerIndex + this.get('batchSize') : csvContent.length;
+      isFinished = upperIndex === csvContent.length;
+      const batch = csvContent.slice(lowerIndex, upperIndex);
+      let x = [],
+          y = [];
+
+      for (let i = 0; i < batch.length; i++) {
+        const row = batch[i];
+        x.push(row[0]);
+        y.push(row[1]);
+      }
+
+      this.set('batchNumber', this.batchNumber + 1);
+      return {
+        batch: [x, y],
+        isFinished: isFinished
+      };
+    },
 
     graphComponent() {
       const csvContent = JSON.parse(localStorage.getItem("csv"));
       var x = [],
           y = [];
+      const noOfInitialDataPoint = csvContent.length > this.batchSize ? this.batchSize : csvContent.length;
+      this.set('batchNumber', 1);
 
-      for (var i = 1; i < csvContent.length; i++) {
+      for (var i = 1; i < noOfInitialDataPoint; i++) {
         const row = csvContent[i];
         x.push(row[0]);
         y.push(row[1]);
@@ -483,25 +473,42 @@
         showlegend: "true",
         xaxis: {
           title: this.get("labelX"),
-          range: []
+          range: [],
+          tickfont: {
+            family: "Old Standard TT, serif",
+            size: 14,
+            color: "black"
+          },
+          automargin: true
         },
         yaxis: {
           title: this.get("labelY"),
           range: []
         },
-        height: this.get('layoutHeight'),
-        width: this.get('layoutWidth'),
-        paper_bgcolor: this.get('paperBGColor'),
-        plot_bgcolor: this.get('plotBGColor')
+        height: this.get("layoutHeight"),
+        width: this.get("layoutWidth"),
+        paper_bgcolor: this.get("paperBGColor"),
+        plot_bgcolor: this.get("plotBGColor")
       };
-      Plotly.newPlot("graph-display", data, layout, {
+      Plotly.react("graph-display", data, layout, {
         scrollZoom: this.get("scrollZoom"),
         editable: this.get("temporaryEdit")
       });
     },
 
-    didRender() {
+    didInsertElement() {
       this.graphComponent();
+    },
+
+    didRender() {
+      var interval = setInterval(() => {
+        const singleBatch = this.getDatasetByBatch();
+        Plotly.extendTraces("graph-display", {
+          x: [singleBatch.batch[0]],
+          y: [singleBatch.batch[1]]
+        }, [0]);
+        if (singleBatch.isFinished) clearInterval(interval);
+      }, 1500);
     },
 
     actions: {
@@ -537,6 +544,7 @@
 
       changeLineStyle() {
         this.set("lineType", event.target.value);
+        console.log(this.lineType);
         this.graphComponent();
       },
 
@@ -580,8 +588,8 @@
   _exports.default = void 0;
 
   var _default = Ember.HTMLBars.template({
-    "id": "RxdsdlvG",
-    "block": "{\"symbols\":[\"&default\"],\"statements\":[[7,\"div\",true],[10,\"class\",\"container\"],[8],[0,\"\\n\\t\"],[7,\"div\",true],[10,\"id\",\"graph-display\"],[10,\"class\",\"\"],[8],[9],[0,\"\\n\\t\"],[7,\"div\",true],[10,\"class\",\"row\"],[8],[0,\"\\n\\t\\t\"],[7,\"div\",true],[10,\"class\",\"col\"],[8],[0,\"\\n\\t\\t\\t\"],[7,\"p\",true],[10,\"style\",\"margin-bottom: 0\"],[8],[0,\"Line Color\"],[9],[0,\"\\n\\t\\t\\t\"],[7,\"input\",true],[10,\"id\",\"line-color\"],[11,\"onchange\",[28,\"action\",[[23,0,[]],\"changeLineColor\"],null]],[10,\"value\",\"red\"],[10,\"type\",\"color\"],[8],[9],[0,\"\\n\\t\\t\\t\"],[7,\"p\",true],[10,\"style\",\"margin-bottom: 0\"],[8],[0,\"Marker Color\"],[9],[0,\"\\n\\t\\t\\t\"],[7,\"input\",true],[10,\"id\",\"marker-color\"],[11,\"onchange\",[28,\"action\",[[23,0,[]],\"changeMarkerColor\"],null]],[10,\"value\",\"green\"],[10,\"type\",\"color\"],[8],[9],[0,\"\\n\\t\\t\\t\"],[7,\"p\",true],[10,\"style\",\"margin-bottom: 0\"],[8],[0,\"Background Color\"],[9],[0,\"\\n\\t\\t\\t\"],[7,\"input\",true],[10,\"id\",\"background-color\"],[11,\"onchange\",[28,\"action\",[[23,0,[]],\"changeBackgroundColor\"],null]],[10,\"value\",\"green\"],[10,\"type\",\"color\"],[8],[9],[0,\"\\n\\t\\t\"],[9],[0,\"\\n\\t\\t\"],[7,\"div\",true],[10,\"class\",\"form-check col-sm\"],[8],[0,\"\\n\\t\\t\\t\"],[7,\"input\",true],[10,\"class\",\"form-check-input\"],[10,\"value\",\"\"],[10,\"id\",\"scroll-zoom\"],[11,\"onchange\",[28,\"action\",[[23,0,[]],\"toggleScrollZoom\"],null]],[10,\"type\",\"checkbox\"],[8],[9],[0,\"\\n\\t\\t\\t\"],[7,\"label\",true],[10,\"class\",\"form-check-label\"],[10,\"for\",\"scroll-zoom\"],[8],[0,\"\\n\\t\\t\\tScroll Zoom\\n\\t\\t\\t\"],[9],[7,\"br\",true],[8],[9],[0,\"\\n\\t\\t\\t\"],[7,\"input\",true],[10,\"class\",\"form-check-input\"],[10,\"value\",\"\"],[10,\"id\",\"temporary-edit\"],[11,\"onchange\",[28,\"action\",[[23,0,[]],\"toggleTemporaryEdit\"],null]],[10,\"type\",\"checkbox\"],[8],[9],[0,\"\\n\\t\\t\\t\"],[7,\"label\",true],[10,\"class\",\"form-check-label\"],[10,\"for\",\"temporary-edit\"],[8],[0,\"\\n\\t\\t\\tTemporary Edit\\n\\t\\t\\t\"],[9],[0,\"\\n\\t\\t\"],[9],[0,\"\\n\\t\\t\"],[7,\"div\",true],[10,\"style\",\"width: 25vw\"],[10,\"class\",\"col-md-auto\"],[8],[0,\"\\n\\t\\t\\t\"],[7,\"label\",true],[10,\"class\",\"form-check-label\"],[10,\"for\",\"line-width\"],[8],[0,\"\\n\\t\\t\\tLine Width\\n\\t\\t\\t\"],[9],[0,\"\\n\\t\\t\\t\"],[7,\"input\",true],[10,\"class\",\"custom-range\"],[10,\"id\",\"line-width\"],[10,\"min\",\"1\"],[10,\"max\",\"20\"],[11,\"onchange\",[28,\"action\",[[23,0,[]],\"changeLineWidth\"],null]],[10,\"value\",\"5\"],[10,\"type\",\"range\"],[8],[9],[0,\"\\n\\t\\t\\t\"],[7,\"label\",true],[10,\"class\",\"form-check-label\"],[10,\"for\",\"marker-size\"],[8],[0,\"\\n\\t\\t\\tMarker Size\\n\\t\\t\\t\"],[9],[0,\"\\n\\t\\t\\t\"],[7,\"input\",true],[10,\"class\",\"custom-range\"],[10,\"id\",\"marker-size\"],[10,\"min\",\"10\"],[10,\"max\",\"30\"],[11,\"onchange\",[28,\"action\",[[23,0,[]],\"changeMarkerSize\"],null]],[10,\"value\",\"15\"],[10,\"type\",\"range\"],[8],[9],[0,\"\\n\\t\\t\\t\"],[7,\"label\",true],[10,\"class\",\"form-check-label\"],[10,\"for\",\"layout-height\"],[8],[0,\"\\n\\t\\t\\tHeight\\n\\t\\t\\t\"],[9],[0,\"\\n\\t\\t\\t\"],[7,\"input\",true],[10,\"class\",\"custom-range\"],[10,\"id\",\"layout-height\"],[10,\"min\",\"400\"],[10,\"max\",\"1270\"],[11,\"onchange\",[28,\"action\",[[23,0,[]],\"changeLayoutHeight\"],null]],[10,\"value\",\"400\"],[10,\"type\",\"range\"],[8],[9],[0,\"\\n\\t\\t\\t\"],[7,\"label\",true],[10,\"class\",\"form-check-label\"],[10,\"for\",\"layout-width\"],[8],[0,\"\\n\\t\\t\\tWidth\\n\\t\\t\\t\"],[9],[0,\"\\n\\t\\t\\t\"],[7,\"input\",true],[10,\"class\",\"custom-range\"],[10,\"id\",\"layout-width\"],[10,\"min\",\"400\"],[10,\"max\",\"1270\"],[11,\"onchange\",[28,\"action\",[[23,0,[]],\"changeLayoutWidth\"],null]],[10,\"value\",\"600\"],[10,\"type\",\"range\"],[8],[9],[0,\"\\n\\t\\t\"],[9],[0,\"\\n\\t\\t\"],[7,\"div\",true],[10,\"class\",\"col-sm\"],[8],[0,\"\\n\\t\\t\\t\"],[7,\"label\",true],[10,\"class\",\"form-check-label\"],[10,\"for\",\"line-types\"],[8],[0,\" Line Style \"],[9],[0,\"\\n\\t\\t\\t\"],[7,\"select\",true],[11,\"onchange\",[28,\"action\",[[23,0,[]],\"changeLineStyle\"],null]],[10,\"style\",\"padding:5px\"],[10,\"id\",\"line-types\"],[8],[0,\"\\n\\t\\t\\t\\t\"],[7,\"option\",true],[10,\"value\",\"line\"],[10,\"selected\",\"\"],[8],[0,\"Line\"],[9],[0,\"\\n\\t\\t\\t\\t\"],[7,\"option\",true],[10,\"value\",\"dot\"],[8],[0,\"Dot\"],[9],[0,\"\\n\\t\\t\\t\\t\"],[7,\"option\",true],[10,\"value\",\"dashdot\"],[8],[0,\"Dotted with Dash\"],[9],[0,\"\\n\\t\\t\\t\"],[9],[0,\"\\n\\t\\t\"],[9],[0,\"\\n\\t\\t\"],[7,\"div\",true],[10,\"class\",\"col-sm\"],[8],[0,\"\\n\\t\\t\\t\"],[7,\"input\",true],[10,\"id\",\"label-x\"],[11,\"onkeyup\",[28,\"action\",[[23,0,[]],\"changeXLabel\"],null]],[10,\"placeholder\",\" Label for X axis \"],[10,\"type\",\"text\"],[8],[9],[0,\"\\n\\t\\t\\t\"],[7,\"input\",true],[10,\"id\",\"label-y\"],[11,\"onkeyup\",[28,\"action\",[[23,0,[]],\"changeYLabel\"],null]],[10,\"placeholder\",\" Label for Y axis \"],[10,\"type\",\"text\"],[8],[9],[0,\"\\n\\t\\t\"],[9],[0,\"\\n\\t\"],[9],[0,\"\\n\"],[9],[0,\"\\n\"],[14,1]],\"hasEval\":false}",
+    "id": "C8jmdFXB",
+    "block": "{\"symbols\":[\"&default\"],\"statements\":[[7,\"div\",true],[10,\"class\",\"container\"],[8],[0,\"\\n\\t\"],[7,\"div\",true],[10,\"id\",\"graph-display\"],[10,\"class\",\"\"],[8],[9],[0,\"\\n\\t\"],[7,\"div\",true],[10,\"class\",\"row\"],[8],[0,\"\\n\\t\\t\"],[7,\"div\",true],[10,\"class\",\"col\"],[8],[0,\"\\n\\t\\t\\t\"],[7,\"p\",true],[10,\"style\",\"margin-bottom: 0\"],[8],[0,\"Line Color\"],[9],[0,\"\\n\\t\\t\\t\"],[7,\"input\",true],[10,\"id\",\"line-color\"],[11,\"onchange\",[28,\"action\",[[23,0,[]],\"changeLineColor\"],null]],[10,\"value\",\"#ff0000\"],[10,\"type\",\"color\"],[8],[9],[0,\"\\n\\t\\t\\t\"],[7,\"p\",true],[10,\"style\",\"margin-bottom: 0\"],[8],[0,\"Marker Color\"],[9],[0,\"\\n\\t\\t\\t\"],[7,\"input\",true],[10,\"id\",\"marker-color\"],[11,\"onchange\",[28,\"action\",[[23,0,[]],\"changeMarkerColor\"],null]],[10,\"value\",\"#00ff00\"],[10,\"type\",\"color\"],[8],[9],[0,\"\\n\\t\\t\\t\"],[7,\"p\",true],[10,\"style\",\"margin-bottom: 0\"],[8],[0,\"Background Color\"],[9],[0,\"\\n\\t\\t\\t\"],[7,\"input\",true],[10,\"id\",\"background-color\"],[11,\"onchange\",[28,\"action\",[[23,0,[]],\"changeBackgroundColor\"],null]],[10,\"value\",\"#f6f6f6\"],[10,\"type\",\"color\"],[8],[9],[0,\"\\n\\t\\t\"],[9],[0,\"\\n\\t\\t\"],[7,\"div\",true],[10,\"class\",\"form-check col-sm\"],[8],[0,\"\\n\\t\\t\\t\"],[7,\"input\",true],[10,\"class\",\"form-check-input\"],[10,\"value\",\"\"],[10,\"id\",\"scroll-zoom\"],[11,\"onchange\",[28,\"action\",[[23,0,[]],\"toggleScrollZoom\"],null]],[10,\"type\",\"checkbox\"],[8],[9],[0,\"\\n\\t\\t\\t\"],[7,\"label\",true],[10,\"class\",\"form-check-label\"],[10,\"for\",\"scroll-zoom\"],[8],[0,\"\\n\\t\\t\\tScroll Zoom\\n\\t\\t\\t\"],[9],[7,\"br\",true],[8],[9],[0,\"\\n\"],[0,\"\\t\\t\"],[9],[0,\"\\n\\t\\t\"],[7,\"div\",true],[10,\"style\",\"width: 25vw\"],[10,\"class\",\"col-md-auto\"],[8],[0,\"\\n\\t\\t\\t\"],[7,\"label\",true],[10,\"class\",\"form-check-label\"],[10,\"for\",\"line-width\"],[8],[0,\"\\n\\t\\t\\tLine Width\\n\\t\\t\\t\"],[9],[0,\"\\n\\t\\t\\t\"],[7,\"input\",true],[10,\"class\",\"custom-range\"],[10,\"id\",\"line-width\"],[10,\"min\",\"1\"],[10,\"max\",\"20\"],[11,\"onchange\",[28,\"action\",[[23,0,[]],\"changeLineWidth\"],null]],[10,\"value\",\"5\"],[10,\"type\",\"range\"],[8],[9],[0,\"\\n\\t\\t\\t\"],[7,\"label\",true],[10,\"class\",\"form-check-label\"],[10,\"for\",\"marker-size\"],[8],[0,\"\\n\\t\\t\\tMarker Size\\n\\t\\t\\t\"],[9],[0,\"\\n\\t\\t\\t\"],[7,\"input\",true],[10,\"class\",\"custom-range\"],[10,\"id\",\"marker-size\"],[10,\"min\",\"10\"],[10,\"max\",\"30\"],[11,\"onchange\",[28,\"action\",[[23,0,[]],\"changeMarkerSize\"],null]],[10,\"value\",\"15\"],[10,\"type\",\"range\"],[8],[9],[0,\"\\n\\t\\t\\t\"],[7,\"label\",true],[10,\"class\",\"form-check-label\"],[10,\"for\",\"layout-height\"],[8],[0,\"\\n\\t\\t\\tHeight\\n\\t\\t\\t\"],[9],[0,\"\\n\\t\\t\\t\"],[7,\"input\",true],[10,\"class\",\"custom-range\"],[10,\"id\",\"layout-height\"],[10,\"min\",\"400\"],[10,\"max\",\"1270\"],[11,\"onchange\",[28,\"action\",[[23,0,[]],\"changeLayoutHeight\"],null]],[10,\"value\",\"400\"],[10,\"type\",\"range\"],[8],[9],[0,\"\\n\\t\\t\\t\"],[7,\"label\",true],[10,\"class\",\"form-check-label\"],[10,\"for\",\"layout-width\"],[8],[0,\"\\n\\t\\t\\tWidth\\n\\t\\t\\t\"],[9],[0,\"\\n\\t\\t\\t\"],[7,\"input\",true],[10,\"class\",\"custom-range\"],[10,\"id\",\"layout-width\"],[10,\"min\",\"400\"],[10,\"max\",\"1980\"],[11,\"onchange\",[28,\"action\",[[23,0,[]],\"changeLayoutWidth\"],null]],[10,\"value\",\"1100\"],[10,\"type\",\"range\"],[8],[9],[0,\"\\n\\t\\t\"],[9],[0,\"\\n\\t\\t\"],[7,\"div\",true],[10,\"class\",\"col-sm\"],[8],[0,\"\\n\\t\\t\\t\"],[7,\"label\",true],[10,\"class\",\"form-check-label\"],[10,\"for\",\"line-types\"],[8],[0,\" Line Style \"],[9],[0,\"\\n\\t\\t\\t\"],[7,\"select\",true],[11,\"onchange\",[28,\"action\",[[23,0,[]],\"changeLineStyle\"],null]],[10,\"style\",\"padding:5px\"],[10,\"id\",\"line-types\"],[8],[0,\"\\n\\t\\t\\t\\t\"],[7,\"option\",true],[10,\"value\",\"solid\"],[10,\"selected\",\"\"],[8],[0,\"Line\"],[9],[0,\"\\n\\t\\t\\t\\t\"],[7,\"option\",true],[10,\"value\",\"dot\"],[8],[0,\"Dot\"],[9],[0,\"\\n\\t\\t\\t\\t\"],[7,\"option\",true],[10,\"value\",\"dashdot\"],[8],[0,\"Dotted with Dash\"],[9],[0,\"\\n\\t\\t\\t\"],[9],[0,\"\\n\\t\\t\"],[9],[0,\"\\n\\t\\t\"],[7,\"div\",true],[10,\"class\",\"col-sm\"],[8],[0,\"\\n\\t\\t\\t\"],[7,\"label\",true],[10,\"class\",\"form-check-label\"],[8],[0,\"\\n\\t\\t\\t\\tChange Axis Title:\\n\\t\\t\\t\"],[9],[0,\"\\n\\t\\t\\t\"],[7,\"input\",true],[10,\"id\",\"label-x\"],[11,\"onkeyup\",[28,\"action\",[[23,0,[]],\"changeXLabel\"],null]],[10,\"placeholder\",\" Label for X axis \"],[10,\"autocomplete\",\"off\"],[10,\"type\",\"text\"],[8],[9],[0,\"\\n\\t\\t\\t\"],[7,\"input\",true],[10,\"id\",\"label-y\"],[11,\"onkeyup\",[28,\"action\",[[23,0,[]],\"changeYLabel\"],null]],[10,\"placeholder\",\" Label for Y axis \"],[10,\"autocomplete\",\"off\"],[10,\"type\",\"text\"],[8],[9],[0,\"\\n\\t\\t\"],[9],[0,\"\\n\\t\"],[9],[0,\"\\n\"],[9],[0,\"\\n\"],[14,1]],\"hasEval\":false}",
     "meta": {
       "moduleName": "xvector-assignment/pods/components/line-graph/template.hbs"
     }
@@ -623,7 +631,7 @@
 
   _exports.default = _default;
 });
-;define("xvector-assignment/pods/index/route", ["exports"], function (_exports) {
+;define("xvector-assignment/pods/index/route", ["exports", "xvector-assignment/pods/index/controller"], function (_exports, _controller) {
   "use strict";
 
   Object.defineProperty(_exports, "__esModule", {
@@ -631,7 +639,17 @@
   });
   _exports.default = void 0;
 
-  var _default = Ember.Route.extend({});
+  var _default = Ember.Route.extend({
+    model: function () {
+      let data = {
+        csv: this.store.createRecord('index')
+      };
+      return data;
+    },
+    setupController: function (controller, model) {
+      controller.set('index', model.csv);
+    }
+  });
 
   _exports.default = _default;
 });
@@ -644,8 +662,8 @@
   _exports.default = void 0;
 
   var _default = Ember.HTMLBars.template({
-    "id": "AZ3ysP01",
-    "block": "{\"symbols\":[],\"statements\":[[5,\"csv-image\",[],[[],[]]],[0,\"\\n\"],[7,\"div\",true],[10,\"id\",\"upload-csv\"],[8],[0,\"\\n\\t\"],[7,\"input\",true],[10,\"class\",\"form-control-file\"],[10,\"required\",\"\"],[10,\"id\",\"input-file\"],[10,\"name\",\"input-file\"],[10,\"type\",\"file\"],[8],[9],[0,\"\\n\\t\"],[7,\"button\",true],[10,\"class\",\"btn btn-secondary btn-sm\"],[10,\"id\",\"upload-button\"],[10,\"accept\",\"csv\"],[11,\"onclick\",[28,\"action\",[[23,0,[]],\"readCSV\"],null]],[10,\"type\",\"submit\"],[8],[0,\" Upload \"],[9],[0,\"\\n\"],[4,\"if\",[[24,[\"isSubmitted\"]]],null,{\"statements\":[[4,\"link-to\",null,[[\"route\"],[\"visualize\"]],{\"statements\":[[0,\"\\t\"],[7,\"button\",true],[10,\"class\",\"btn btn-secondary btn-sm\"],[10,\"id\",\"upload-button\"],[10,\"accept\",\"csv\"],[11,\"onclick\",[28,\"action\",[[23,0,[]],\"readCSV\"],null]],[10,\"type\",\"submit\"],[8],[0,\"\\n\\t\\tView Plot \"],[9],[0,\"\\n\"]],\"parameters\":[]},null]],\"parameters\":[]},null],[9],[0,\"\\n\"],[1,[22,\"outlet\"],false]],\"hasEval\":false}",
+    "id": "G1ZB+yLO",
+    "block": "{\"symbols\":[],\"statements\":[[5,\"csv-image\",[],[[],[]]],[0,\"\\n\"],[7,\"div\",true],[10,\"id\",\"upload-csv\"],[8],[0,\"\\n\\t\"],[7,\"input\",true],[10,\"class\",\"form-control-file\"],[10,\"required\",\"\"],[10,\"id\",\"input-file\"],[10,\"name\",\"input-file\"],[10,\"type\",\"file\"],[8],[9],[0,\"\\n\\t\"],[7,\"button\",true],[10,\"class\",\"btn btn-secondary btn-sm\"],[10,\"id\",\"upload-button\"],[11,\"onclick\",[28,\"action\",[[23,0,[]],\"readCSV\"],null]],[10,\"type\",\"submit\"],[8],[0,\" Upload \"],[9],[0,\"\\n\"],[4,\"if\",[[24,[\"isSubmitted\"]]],null,{\"statements\":[[4,\"link-to\",null,[[\"route\"],[\"visualize\"]],{\"statements\":[[0,\"\\t\"],[7,\"button\",true],[10,\"class\",\"btn btn-secondary btn-sm\"],[10,\"id\",\"upload-button\"],[10,\"accept\",\"csv\"],[11,\"onclick\",[28,\"action\",[[23,0,[]],\"readCSV\"],null]],[10,\"type\",\"submit\"],[8],[0,\"\\n\\t\\tView Plot \"],[9],[0,\"\\n\"]],\"parameters\":[]},null]],\"parameters\":[]},null],[9],[0,\"\\n\"],[1,[22,\"outlet\"],false]],\"hasEval\":false}",
     "meta": {
       "moduleName": "xvector-assignment/pods/index/template.hbs"
     }
@@ -686,8 +704,8 @@
   _exports.default = void 0;
 
   var _default = Ember.HTMLBars.template({
-    "id": "Y4No4xfi",
-    "block": "{\"symbols\":[],\"statements\":[[5,\"line-graph\",[],[[],[]]],[0,\"\\n\"],[1,[22,\"outlet\"],false]],\"hasEval\":false}",
+    "id": "JQJWqesr",
+    "block": "{\"symbols\":[],\"statements\":[[1,[22,\"line-graph\"],false],[0,\"\\n\"],[1,[22,\"outlet\"],false]],\"hasEval\":false}",
     "meta": {
       "moduleName": "xvector-assignment/pods/visualize/template.hbs"
     }
