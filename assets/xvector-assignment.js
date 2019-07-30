@@ -417,7 +417,6 @@
     },
 
     getDatasetByBatch() {
-      console.log(this.lineType);
       let isFinished = false;
       const csvContent = JSON.parse(localStorage.getItem("csv"));
       const lowerIndex = this.get('batchNumber') * this.get('batchSize');
@@ -433,6 +432,7 @@
         y.push(row[1]);
       }
 
+      console.log(this.batchNumber, isFinished);
       this.set('batchNumber', this.batchNumber + 1);
       return {
         batch: [x, y],
@@ -493,6 +493,16 @@
       Plotly.react("graph-display", data, layout, {
         scrollZoom: this.get("scrollZoom"),
         editable: this.get("temporaryEdit")
+      }).then(() => {
+        var interval = setInterval(() => {
+          const singleBatch = this.getDatasetByBatch();
+          console.log(singleBatch.isFinished);
+          Plotly.extendTraces("graph-display", {
+            x: [singleBatch.batch[0]],
+            y: [singleBatch.batch[1]]
+          }, [0]);
+          if (singleBatch.isFinished) clearInterval(interval);
+        }, 1500);
       });
     },
 
@@ -500,16 +510,7 @@
       this.graphComponent();
     },
 
-    didRender() {
-      var interval = setInterval(() => {
-        const singleBatch = this.getDatasetByBatch();
-        Plotly.extendTraces("graph-display", {
-          x: [singleBatch.batch[0]],
-          y: [singleBatch.batch[1]]
-        }, [0]);
-        if (singleBatch.isFinished) clearInterval(interval);
-      }, 1500);
-    },
+    didRender() {},
 
     actions: {
       changeLineColor() {
@@ -588,8 +589,8 @@
   _exports.default = void 0;
 
   var _default = Ember.HTMLBars.template({
-    "id": "C8jmdFXB",
-    "block": "{\"symbols\":[\"&default\"],\"statements\":[[7,\"div\",true],[10,\"class\",\"container\"],[8],[0,\"\\n\\t\"],[7,\"div\",true],[10,\"id\",\"graph-display\"],[10,\"class\",\"\"],[8],[9],[0,\"\\n\\t\"],[7,\"div\",true],[10,\"class\",\"row\"],[8],[0,\"\\n\\t\\t\"],[7,\"div\",true],[10,\"class\",\"col\"],[8],[0,\"\\n\\t\\t\\t\"],[7,\"p\",true],[10,\"style\",\"margin-bottom: 0\"],[8],[0,\"Line Color\"],[9],[0,\"\\n\\t\\t\\t\"],[7,\"input\",true],[10,\"id\",\"line-color\"],[11,\"onchange\",[28,\"action\",[[23,0,[]],\"changeLineColor\"],null]],[10,\"value\",\"#ff0000\"],[10,\"type\",\"color\"],[8],[9],[0,\"\\n\\t\\t\\t\"],[7,\"p\",true],[10,\"style\",\"margin-bottom: 0\"],[8],[0,\"Marker Color\"],[9],[0,\"\\n\\t\\t\\t\"],[7,\"input\",true],[10,\"id\",\"marker-color\"],[11,\"onchange\",[28,\"action\",[[23,0,[]],\"changeMarkerColor\"],null]],[10,\"value\",\"#00ff00\"],[10,\"type\",\"color\"],[8],[9],[0,\"\\n\\t\\t\\t\"],[7,\"p\",true],[10,\"style\",\"margin-bottom: 0\"],[8],[0,\"Background Color\"],[9],[0,\"\\n\\t\\t\\t\"],[7,\"input\",true],[10,\"id\",\"background-color\"],[11,\"onchange\",[28,\"action\",[[23,0,[]],\"changeBackgroundColor\"],null]],[10,\"value\",\"#f6f6f6\"],[10,\"type\",\"color\"],[8],[9],[0,\"\\n\\t\\t\"],[9],[0,\"\\n\\t\\t\"],[7,\"div\",true],[10,\"class\",\"form-check col-sm\"],[8],[0,\"\\n\\t\\t\\t\"],[7,\"input\",true],[10,\"class\",\"form-check-input\"],[10,\"value\",\"\"],[10,\"id\",\"scroll-zoom\"],[11,\"onchange\",[28,\"action\",[[23,0,[]],\"toggleScrollZoom\"],null]],[10,\"type\",\"checkbox\"],[8],[9],[0,\"\\n\\t\\t\\t\"],[7,\"label\",true],[10,\"class\",\"form-check-label\"],[10,\"for\",\"scroll-zoom\"],[8],[0,\"\\n\\t\\t\\tScroll Zoom\\n\\t\\t\\t\"],[9],[7,\"br\",true],[8],[9],[0,\"\\n\"],[0,\"\\t\\t\"],[9],[0,\"\\n\\t\\t\"],[7,\"div\",true],[10,\"style\",\"width: 25vw\"],[10,\"class\",\"col-md-auto\"],[8],[0,\"\\n\\t\\t\\t\"],[7,\"label\",true],[10,\"class\",\"form-check-label\"],[10,\"for\",\"line-width\"],[8],[0,\"\\n\\t\\t\\tLine Width\\n\\t\\t\\t\"],[9],[0,\"\\n\\t\\t\\t\"],[7,\"input\",true],[10,\"class\",\"custom-range\"],[10,\"id\",\"line-width\"],[10,\"min\",\"1\"],[10,\"max\",\"20\"],[11,\"onchange\",[28,\"action\",[[23,0,[]],\"changeLineWidth\"],null]],[10,\"value\",\"5\"],[10,\"type\",\"range\"],[8],[9],[0,\"\\n\\t\\t\\t\"],[7,\"label\",true],[10,\"class\",\"form-check-label\"],[10,\"for\",\"marker-size\"],[8],[0,\"\\n\\t\\t\\tMarker Size\\n\\t\\t\\t\"],[9],[0,\"\\n\\t\\t\\t\"],[7,\"input\",true],[10,\"class\",\"custom-range\"],[10,\"id\",\"marker-size\"],[10,\"min\",\"10\"],[10,\"max\",\"30\"],[11,\"onchange\",[28,\"action\",[[23,0,[]],\"changeMarkerSize\"],null]],[10,\"value\",\"15\"],[10,\"type\",\"range\"],[8],[9],[0,\"\\n\\t\\t\\t\"],[7,\"label\",true],[10,\"class\",\"form-check-label\"],[10,\"for\",\"layout-height\"],[8],[0,\"\\n\\t\\t\\tHeight\\n\\t\\t\\t\"],[9],[0,\"\\n\\t\\t\\t\"],[7,\"input\",true],[10,\"class\",\"custom-range\"],[10,\"id\",\"layout-height\"],[10,\"min\",\"400\"],[10,\"max\",\"1270\"],[11,\"onchange\",[28,\"action\",[[23,0,[]],\"changeLayoutHeight\"],null]],[10,\"value\",\"400\"],[10,\"type\",\"range\"],[8],[9],[0,\"\\n\\t\\t\\t\"],[7,\"label\",true],[10,\"class\",\"form-check-label\"],[10,\"for\",\"layout-width\"],[8],[0,\"\\n\\t\\t\\tWidth\\n\\t\\t\\t\"],[9],[0,\"\\n\\t\\t\\t\"],[7,\"input\",true],[10,\"class\",\"custom-range\"],[10,\"id\",\"layout-width\"],[10,\"min\",\"400\"],[10,\"max\",\"1980\"],[11,\"onchange\",[28,\"action\",[[23,0,[]],\"changeLayoutWidth\"],null]],[10,\"value\",\"1100\"],[10,\"type\",\"range\"],[8],[9],[0,\"\\n\\t\\t\"],[9],[0,\"\\n\\t\\t\"],[7,\"div\",true],[10,\"class\",\"col-sm\"],[8],[0,\"\\n\\t\\t\\t\"],[7,\"label\",true],[10,\"class\",\"form-check-label\"],[10,\"for\",\"line-types\"],[8],[0,\" Line Style \"],[9],[0,\"\\n\\t\\t\\t\"],[7,\"select\",true],[11,\"onchange\",[28,\"action\",[[23,0,[]],\"changeLineStyle\"],null]],[10,\"style\",\"padding:5px\"],[10,\"id\",\"line-types\"],[8],[0,\"\\n\\t\\t\\t\\t\"],[7,\"option\",true],[10,\"value\",\"solid\"],[10,\"selected\",\"\"],[8],[0,\"Line\"],[9],[0,\"\\n\\t\\t\\t\\t\"],[7,\"option\",true],[10,\"value\",\"dot\"],[8],[0,\"Dot\"],[9],[0,\"\\n\\t\\t\\t\\t\"],[7,\"option\",true],[10,\"value\",\"dashdot\"],[8],[0,\"Dotted with Dash\"],[9],[0,\"\\n\\t\\t\\t\"],[9],[0,\"\\n\\t\\t\"],[9],[0,\"\\n\\t\\t\"],[7,\"div\",true],[10,\"class\",\"col-sm\"],[8],[0,\"\\n\\t\\t\\t\"],[7,\"label\",true],[10,\"class\",\"form-check-label\"],[8],[0,\"\\n\\t\\t\\t\\tChange Axis Title:\\n\\t\\t\\t\"],[9],[0,\"\\n\\t\\t\\t\"],[7,\"input\",true],[10,\"id\",\"label-x\"],[11,\"onkeyup\",[28,\"action\",[[23,0,[]],\"changeXLabel\"],null]],[10,\"placeholder\",\" Label for X axis \"],[10,\"autocomplete\",\"off\"],[10,\"type\",\"text\"],[8],[9],[0,\"\\n\\t\\t\\t\"],[7,\"input\",true],[10,\"id\",\"label-y\"],[11,\"onkeyup\",[28,\"action\",[[23,0,[]],\"changeYLabel\"],null]],[10,\"placeholder\",\" Label for Y axis \"],[10,\"autocomplete\",\"off\"],[10,\"type\",\"text\"],[8],[9],[0,\"\\n\\t\\t\"],[9],[0,\"\\n\\t\"],[9],[0,\"\\n\"],[9],[0,\"\\n\"],[14,1]],\"hasEval\":false}",
+    "id": "9ymg3kBD",
+    "block": "{\"symbols\":[\"&default\"],\"statements\":[[7,\"div\",true],[10,\"class\",\"container\"],[8],[0,\"\\n\\t\"],[7,\"div\",true],[10,\"id\",\"graph-display\"],[10,\"class\",\"\"],[8],[9],[0,\"\\n\\t\"],[7,\"div\",true],[10,\"class\",\"row\"],[8],[0,\"\\n\\t\\t\"],[7,\"div\",true],[10,\"class\",\"col\"],[8],[0,\"\\n\\t\\t\\t\"],[7,\"p\",true],[10,\"style\",\"margin-bottom: 0\"],[8],[0,\"Line Color\"],[9],[0,\"\\n\\t\\t\\t\"],[7,\"input\",true],[10,\"id\",\"line-color\"],[11,\"onchange\",[28,\"action\",[[23,0,[]],\"changeLineColor\"],null]],[10,\"value\",\"#ff0000\"],[10,\"type\",\"color\"],[8],[9],[0,\"\\n\\t\\t\\t\"],[7,\"p\",true],[10,\"style\",\"margin-bottom: 0\"],[8],[0,\"Marker Color\"],[9],[0,\"\\n\\t\\t\\t\"],[7,\"input\",true],[10,\"id\",\"marker-color\"],[11,\"onchange\",[28,\"action\",[[23,0,[]],\"changeMarkerColor\"],null]],[10,\"value\",\"#00ff00\"],[10,\"type\",\"color\"],[8],[9],[0,\"\\n\\t\\t\\t\"],[7,\"p\",true],[10,\"style\",\"margin-bottom: 0\"],[8],[0,\"Background Color\"],[9],[0,\"\\n\\t\\t\\t\"],[7,\"input\",true],[10,\"id\",\"background-color\"],[11,\"onchange\",[28,\"action\",[[23,0,[]],\"changeBackgroundColor\"],null]],[10,\"value\",\"#f6f6f6\"],[10,\"type\",\"color\"],[8],[9],[0,\"\\n\\t\\t\"],[9],[0,\"\\n\\t\\t\"],[7,\"div\",true],[10,\"class\",\"form-check col-sm\"],[8],[0,\"\\n\\t\\t\\t\"],[7,\"input\",true],[10,\"class\",\"form-check-input\"],[10,\"value\",\"\"],[10,\"id\",\"scroll-zoom\"],[11,\"onchange\",[28,\"action\",[[23,0,[]],\"toggleScrollZoom\"],null]],[10,\"type\",\"checkbox\"],[8],[9],[0,\"\\n\\t\\t\\t\"],[7,\"label\",true],[10,\"class\",\"form-check-label\"],[10,\"for\",\"scroll-zoom\"],[8],[0,\"\\n\\t\\t\\tScroll Zoom\\n\\t\\t\\t\"],[9],[7,\"br\",true],[8],[9],[0,\"\\n\"],[0,\"\\t\\t\"],[9],[0,\"\\n\\t\\t\"],[7,\"div\",true],[10,\"style\",\"width: 25vw\"],[10,\"class\",\"col-md-auto\"],[8],[0,\"\\n\\t\\t\\t\"],[7,\"label\",true],[10,\"class\",\"form-check-label\"],[10,\"for\",\"line-width\"],[8],[0,\"\\n\\t\\t\\tLine Width\\n\\t\\t\\t\"],[9],[0,\"\\n\\t\\t\\t\"],[7,\"input\",true],[10,\"class\",\"custom-range\"],[10,\"id\",\"line-width\"],[10,\"min\",\"1\"],[10,\"max\",\"20\"],[11,\"onchange\",[28,\"action\",[[23,0,[]],\"changeLineWidth\"],null]],[10,\"value\",\"5\"],[10,\"type\",\"range\"],[8],[9],[0,\"\\n\\t\\t\\t\"],[7,\"label\",true],[10,\"class\",\"form-check-label\"],[10,\"for\",\"marker-size\"],[8],[0,\"\\n\\t\\t\\tMarker Size\\n\\t\\t\\t\"],[9],[0,\"\\n\\t\\t\\t\"],[7,\"input\",true],[10,\"class\",\"custom-range\"],[10,\"id\",\"marker-size\"],[10,\"min\",\"10\"],[10,\"max\",\"30\"],[11,\"onchange\",[28,\"action\",[[23,0,[]],\"changeMarkerSize\"],null]],[10,\"value\",\"15\"],[10,\"type\",\"range\"],[8],[9],[0,\"\\n\\t\\t\\t\"],[7,\"label\",true],[10,\"class\",\"form-check-label\"],[10,\"for\",\"layout-height\"],[8],[0,\"\\n\\t\\t\\tHeight\\n\\t\\t\\t\"],[9],[0,\"\\n\\t\\t\\t\"],[7,\"input\",true],[10,\"class\",\"custom-range\"],[10,\"id\",\"layout-height\"],[10,\"min\",\"400\"],[10,\"max\",\"1270\"],[11,\"onchange\",[28,\"action\",[[23,0,[]],\"changeLayoutHeight\"],null]],[10,\"value\",\"400\"],[10,\"type\",\"range\"],[8],[9],[0,\"\\n\\t\\t\\t\"],[7,\"label\",true],[10,\"class\",\"form-check-label\"],[10,\"for\",\"layout-width\"],[8],[0,\"\\n\\t\\t\\tWidth\\n\\t\\t\\t\"],[9],[0,\"\\n\\t\\t\\t\"],[7,\"input\",true],[10,\"class\",\"custom-range\"],[10,\"id\",\"layout-width\"],[10,\"min\",\"400\"],[10,\"max\",\"1980\"],[11,\"onchange\",[28,\"action\",[[23,0,[]],\"changeLayoutWidth\"],null]],[10,\"value\",\"1100\"],[10,\"type\",\"range\"],[8],[9],[0,\"\\n\\t\\t\"],[9],[0,\"\\n\\t\\t\"],[7,\"div\",true],[10,\"class\",\"col-sm\"],[8],[0,\"\\n\\t\\t\\t\"],[7,\"label\",true],[10,\"class\",\"form-check-label\"],[10,\"for\",\"line-types\"],[8],[0,\" Line Style \"],[9],[0,\"\\n\\t\\t\\t\"],[7,\"select\",true],[11,\"onchange\",[28,\"action\",[[23,0,[]],\"changeLineStyle\"],null]],[10,\"style\",\"padding:5px\"],[10,\"id\",\"line-types\"],[8],[0,\"\\n\\t\\t\\t\\t\"],[7,\"option\",true],[10,\"value\",\"solid\"],[10,\"selected\",\"\"],[8],[0,\"Line\"],[9],[0,\"\\n\\t\\t\\t\\t\"],[7,\"option\",true],[10,\"value\",\"dot\"],[8],[0,\"Dot\"],[9],[0,\"\\n\\t\\t\\t\\t\"],[7,\"option\",true],[10,\"value\",\"dashdot\"],[8],[0,\"Dotted with Dash\"],[9],[0,\"\\n\\t\\t\\t\"],[9],[0,\"\\n\\t\\t\"],[9],[0,\"\\n\\t\\t\"],[7,\"div\",true],[10,\"class\",\"col-sm\"],[8],[0,\"\\n\\t\\t\\t\"],[7,\"label\",true],[10,\"class\",\"form-check-label\"],[8],[0,\"\\n\\t\\t\\t\\tChange Axis Title:\\n\\t\\t\\t\"],[9],[0,\"\\n\\t\\t\\t\"],[7,\"input\",true],[10,\"id\",\"label-x\"],[11,\"onchange\",[28,\"action\",[[23,0,[]],\"changeXLabel\"],null]],[10,\"placeholder\",\" Label for X axis \"],[10,\"autocomplete\",\"off\"],[10,\"type\",\"text\"],[8],[9],[0,\"\\n\\t\\t\\t\"],[7,\"input\",true],[10,\"id\",\"label-y\"],[11,\"onchange\",[28,\"action\",[[23,0,[]],\"changeYLabel\"],null]],[10,\"placeholder\",\" Label for Y axis \"],[10,\"autocomplete\",\"off\"],[10,\"type\",\"text\"],[8],[9],[0,\"\\n\\t\\t\\t\"],[7,\"br\",true],[8],[9],[0,\"\\n\\t\\t\\t\"],[7,\"br\",true],[8],[9],[0,\"\\n\\t\\t\\t\"],[7,\"span\",true],[10,\"style\",\"margin-bottom: 50px\"],[8],[0,\"\\n\\t\\t\\t\\tBatch Size: \"],[1,[22,\"batchSize\"],false],[0,\"\\n\\t\\t\\t\"],[9],[0,\"\\n\\t\\t\"],[9],[0,\"\\n\\t\"],[9],[0,\"\\n\"],[9],[0,\"\\n\"],[14,1]],\"hasEval\":false}",
     "meta": {
       "moduleName": "xvector-assignment/pods/components/line-graph/template.hbs"
     }
